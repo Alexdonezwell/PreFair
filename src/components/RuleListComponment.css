@@ -1,0 +1,329 @@
+div#dataTable {
+    overflow: scroll;
+}
+div#ranges p{
+  margin: 0px;
+  font-size: 14px;
+}
+div#ranges div.box {
+  border-style: dashed;
+  border-width: thin;
+  padding: 5px;
+  margin-bottom: 20px;
+}
+
+div.histogra-area {
+}
+div.histogra-area div.in-range {
+  background-color: #4e73df;
+  z-index: 1;
+}
+div.histogra-area div.out-of-range {
+  background-color: #858796;
+  z-index: 0;
+}
+.bin {
+  position: relative;
+  margin-right: 1px;
+}
+
+/*Condition Bar*/
+div.condition_bar{
+  height:5px;
+  margin-top:10px;
+}
+
+div.condition_bar div.conditionInfoBarBackgroundPositive{
+  height: 100%;
+  background-color: rgb(233, 211, 253);
+  float: left;
+}
+
+div.condition_bar div.conditionInfoBarBackgroundNegative{
+  height: 100%;
+  background-color: rgb(211, 211, 211);
+  float: left;
+  margin-left: 5px;
+}
+
+/* rule Info */
+div.ruleInfo{
+  border-bottom: 1px solid;
+}
+
+/* Rule bar */
+div.rule_bar{
+  height:5px;
+  margin-top:10px;
+}
+
+
+div.rule_bar div.ruleInfoBarBackgroundPositive{
+  height: 100%;
+  background-color: rgb(233, 211, 253);
+  float: left;
+}
+
+div.rule_bar div.ruleInfoBarBackgroundNegative{
+  height: 100%;
+  background-color: rgb(211, 211, 211);
+  float: left;
+  margin-left: 5px;
+}
+
+/* Rule Connection */
+div.rule_connection {
+  height: 30px;
+  clear: both;
+}
+
+div.rule_connection div.rule_connection_positive {
+  height: 100%;
+  background-color: rgb(85, 26, 139);
+  float: left;
+  margin-left: 40px;
+  /* width: 50px; */
+}
+
+div.rule_connection div.rule_connection_negative {
+  height: 100%;
+  background-color: rgb(211, 211, 211);
+  float: left;
+  margin-left: 10px;
+  /* width: 50px; */
+}
+
+
+/* RULE PROJECT */
+.bin {
+    position: relative;
+    margin-right: 1px;
+}
+
+.bin-color {
+    background-color: #dbe0e2;
+}
+.bin-color-selected {
+    background-color: #0079ba;
+}
+.bin-color-optimal {
+    background-color: #caf9f6;
+}
+.bin-color-optimal-selected {
+    background-color: #01e2d4;
+}
+
+.in-range {
+    z-index: 1;
+}
+.out-of-range {
+    z-index: 0;
+}
+.selected-range {
+    text-align: center;
+}
+
+.ui-slider-horizontal {
+    height: 0.2em;
+}
+.ui-slider .ui-slider-handle {
+width: 0.8em;
+height: 0.8em;
+border-radius: 50%;
+}
+
+.ui-corner-all {
+border-radius: 0;
+}
+
+.tooltip > .tooltiptext {
+visibility: hidden;
+width: 120px;
+background-color: #ffffca;
+color: black;
+text-align: center;
+padding: 12px;
+position: absolute;
+z-index: 100;
+}
+
+.tooltip:hover > .tooltiptext {
+visibility: visible;
+margin-top: 110px;
+}
+
+.display-none {
+display: none;
+}
+
+/* Histogram */
+
+div.histogra-area {
+}
+div.histogra-area div.in-range {
+background-color: #4e73df;
+z-index: 1;
+}
+div.histogra-area div.out-of-range {
+    background-color: #858796;
+    z-index: 0;
+}
+.bin {
+    position: relative;
+    margin-right: 1px;
+}
+
+/*Condition Bar*/
+div.condition_bar{
+    height:5px;
+    margin-top:10px;
+}
+
+div.condition_bar div.conditionInfoBarBackgroundPositive{
+    height: 100%;
+    background-color: rgb(233, 211, 253);
+    float: left;
+}
+
+div.condition_bar div.conditionInfoBarBackgroundNegative{
+    height: 100%;
+    background-color: rgb(211, 211, 211);
+    float: left;
+    margin-left: 5px;
+}
+
+/* rule Info */
+div.ruleInfo{
+    border-bottom: 1px solid;
+}
+
+/* Rule bar */
+div.rule_bar{
+    height:5px;
+    margin-top:10px;
+}
+
+
+div.rule_bar div.ruleInfoBarBackgroundPositive{
+    height: 100%;
+    background-color: rgb(233, 211, 253);
+    float: left;
+}
+
+div.rule_bar div.ruleInfoBarBackgroundNegative{
+    height: 100%;
+    background-color: rgb(211, 211, 211);
+    float: left;
+    margin-left: 5px;
+}
+
+/* Rule Connection */
+div.rule_connection {
+    height: 30px;
+    clear: both;
+}
+
+div.rule_connection div.rule_connection_positive {
+    height: 100%;
+    background-color: rgb(85, 26, 139);
+    float: left;
+    margin-left: 40px;
+    /* width: 50px; */
+}
+
+div.rule_connection div.rule_connection_negative {
+    height: 100%;
+    background-color: rgb(211, 211, 211);
+    float: left;
+    margin-left: 10px;
+    /* width: 50px; */
+}
+
+div#extRanges {
+    display: none;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    -webkit-transition: 0.4s;
+    transition: 0.4s;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    -webkit-transition: 0.4s;
+    transition: 0.4s;
+}
+
+/* input:checked + .slider {
+    background-color: #2196f3;
+}
+
+input:focus + .slider {
+    box-shadow: 0 0 1px #2196f3;
+} */
+
+input:checked + .slider:before {
+    -webkit-transform: translateX(26px);
+    -ms-transform: translateX(26px);
+    transform: translateX(26px);
+}
+
+/* Rounded sliders */
+.slider.round {
+    border-radius: 34px;
+}
+
+.slider.round:before {
+    border-radius: 50%;
+}
+
+
+/* Data Table */
+div#dataTable {
+    overflow: scroll;
+}
+
+div#ranges p{
+  margin: 0px;
+  font-size: 11px;
+}
+div#ranges div.box {
+  border-style: dashed;
+  border-width: thin;
+  padding: 5px;
+  margin-bottom: 20px;
+}
+
+/* Hidden the bar */
+.conditionInfoBarBackgroundPositive {
+  display: none;
+}
+.ruleInfoBarBackgroundPositive {
+  display: none;
+}
