@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/PreFair/static/css/main.e475fb2c.css",
+    "main.js": "/PreFair/static/js/main.57f8869f.js",
+    "index.html": "/PreFair/index.html",
+    "main.e475fb2c.css.map": "/PreFair/static/css/main.e475fb2c.css.map",
+    "main.57f8869f.js.map": "/PreFair/static/js/main.57f8869f.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.e475fb2c.css",
+    "static/js/main.57f8869f.js"
+  ]
+}
