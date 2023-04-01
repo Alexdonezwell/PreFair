@@ -1,8 +1,10 @@
 import React from 'react';
 import * as d3 from 'd3';
 import { sliderBottom } from 'd3-simple-slider';
-import $ from "jquery"
 import './RuleListComponment.css'
+import $ from "jquery";
+// window.jQuery = window.$ = $;
+// import "../assets/checkbox-group.js";
 
 class RuleListComponment extends React.Component {
     constructor(props) {
@@ -43,10 +45,9 @@ class RuleListComponment extends React.Component {
             $("#ruleLearningAlertMsg").hide();
         }
         let eachRules = mlResult["eachRules"];
-        if (!eachRules) {
+        if (!eachRules || eachRules.length == 0 || eachRules[0] == undefined) {
             return;
         }
-
 
         for (var i = 0; i < eachRules.length; i++) {
             let featureNameList = eachRules[i]["featureName"];
@@ -249,7 +250,7 @@ class RuleListComponment extends React.Component {
                 .append("p")
                 .append("b")
                 // .text("Rule ID: " + ruleIds[i]);
-                .text("Rule Number: " + orderId);
+                .text(" Descriptive Rules: ");
 
 
             let features = Object.keys(rule);
@@ -275,6 +276,7 @@ class RuleListComponment extends React.Component {
 
         let isBoolData = data.some(x => x == 'yes' || x == 'no');
         let isEnum = data.some(x => typeof (x) == "string")
+        // const isEnum = false;
 
         if (isBoolData) {
             data = data.map(x => x == 'yes' ? 1 : 0)
@@ -419,6 +421,13 @@ class RuleListComponment extends React.Component {
             return displayRange;
         };
 
+        console.log(ruleId, label, conditionId);
+        const ruleSubconditionDiv = ruleDivName + "_condition" + conditionId;
+        d3.select("#" + ruleDivName)
+            .append("div")
+            .attr("id", ruleSubconditionDiv)
+            .attr("class", "ruleConditionBox")
+
         if (isEnum) {
             let list = "";
             if (conditionsUnderOneRule[2] == '[' && conditionsUnderOneRule[3] == ']') {
@@ -427,21 +436,38 @@ class RuleListComponment extends React.Component {
                 list = conditionsUnderOneRule.reduce((a, b) => a + (a.length > 0 ? "," : "") + b).replace(/\"/g, "")
             }
 
-            d3.select("#" + ruleDivName)
+            let displayFeatureName = featureName;
+            switch (displayFeatureName) {
+                case "reweights":
+                    displayFeatureName = "Bias Mitigation Algorithms";
+                    break;
+                case "norms":
+                    displayFeatureName = "Normalizations";
+                    break;
+                case "pcas":
+                    displayFeatureName = "Principle Conponent Analysis";
+                    break;
+                default:
+                    break;
+            }
+
+            d3.select("#" + ruleSubconditionDiv)
                 .append("div")
                 .attr("id", conditionInfoDiv)
                 .append("div")
                 .attr("id", conditionInfoTxtDiv)
                 .style('float', 'left')
+                .style('margin-left', '5px')
                 .append("p")
                 .attr("id", sliderId)
-                .html(featureName + ": <br />" + "x in " + list);
+                .html(displayFeatureName);
+                // .html(featureName + ": <br />" + "x in " + list);
 
             // TODO rangeDisplay
             // $('#' + sliderId).checkboxGroup();
 
         } else {
-            d3.select("#" + ruleDivName)
+            d3.select("#" + ruleSubconditionDiv)
                 .append("div")
                 .attr("id", conditionInfoDiv)
                 .append("div")
@@ -471,7 +497,8 @@ class RuleListComponment extends React.Component {
 
         var histogramWidth = 220,
             histogramHeight = 100,
-            histogramOffsetLeft = 20;
+            histogramOffsetLeft = 10,
+            histogramOffsetRight = 10;
 
         let enumerateIds = new Set();
         for (var i = 0; i < data.length; i++) {
@@ -504,11 +531,12 @@ class RuleListComponment extends React.Component {
             range = maxData - minData,
             rangePerBin = range / (binNum - 1);
 
-        d3.select("#" + ruleDivName)
+        d3.select("#" + ruleSubconditionDiv)
             .append("div")
             .attr("id", histogramName)
             .attr("class", "histogra-area")
             .style("margin-left", histogramOffsetLeft + "px")
+            .style("margin-right", histogramOffsetRight + "px")
             .style("height", histogramHeight + "px")
             .style("width", histogramWidth + "px");
 
@@ -577,38 +605,96 @@ class RuleListComponment extends React.Component {
 
         if (isEnum) {
             d3
-                .select("#" + ruleDivName)
+                .select("#" + ruleSubconditionDiv)
                 .append("div")
                 .attr("id", subSliderId)
                 .style("background-color", function () {
                     return label === 1 ? "#551A8B" : "#D3D3D3";
                 });
 
-            $('#' + subSliderId).checkboxGroup({
-                selectOptions: enumerateIds,
-                defaultSelected: conditionsUnderOneRule,
-                ruleDivName: ruleDivName,
-                subSliderId: subSliderId,
-                onchange: function (checkedList) {
-                    //histogramName 
 
-                    // Update histgrame
-                    // Update node
-
-                    var binNum = d3.select("#" + histogramName).attr("_number_of_bin");
-                    for (var i = 0; i < binNum; i++) {
-                        const enmeratedVal = parseFloat($("#" + histogramName + " div.histogram-col:eq(" + i + ")").attr("_enumerate_value"));
-                        if (enmeratedVal != NaN) {
-                            $("#" + histogramName + " div.histogram-col:eq(" + i + ") .in-range").css("opacity", (checkedList.includes(enmeratedVal) || checkedList.includes(enmeratedVal.toString()) ? 1.0 : 0.0));
-                        }
+            const checkboxGroupFunc = function (module, options) {
+                var self = module;
+                self.options = options;
+                var selectOptions = Array.from(self.options.selectOptions).sort(function (a, b) { return a - b }),
+                    // defaultSelected = self.options.defaultSelected.map(x => parseInt(x.replace(/\"/g, ""))),
+                    ruleDivName = self.options.ruleDivName,
+                    subSliderId = self.options.subSliderId,
+                    featureName = self.options.featureName,
+                    onchange = self.options.onchange;
+    
+                const flagsArr = {  "norms": ["None", "L1", "L2", "both"], 
+                                    "pcas": ["None", "PCA3", "PCA5", "both"], 
+                                    "reweights": ["None", "Reweighting", "DIR", "both"] }
+                let warpHtml = "";
+    
+                selectOptions.forEach((x, i) => {
+                    if (i != 0 && i % 8 == 0) {
+                        warpHtml += "<br>";
                     }
+    
+                    // warpHtml += '<label style="width:40px"><input type="checkbox" id="' + ruleDivName + subSliderId + '_cb' + x + '" ' +
+                    //     (defaultSelected.includes(x) ? 'checked' : '') + ' value="' + x + '"></input>' + x + '</label>';
+                    let warpStyle = "flex:1;text-align: center;color: white;font-size: 9px; font-weight: bold;";
+                    warpHtml += '<label style="' + warpStyle + '">' + flagsArr[featureName][x] + '</label>';
+                });
+    
+                self.html("<div id='" + ruleDivName + "_" + subSliderId + "' style='display:flex;flex-direction:row'>" + warpHtml + "</div>");
+    
+                // selectOptions.forEach(x => {
+                //     $("#" + ruleDivName + subSliderId + '_cb' + x).change(function () {
+                //         let checkedBoxs = $("#" + ruleDivName + "_" + subSliderId + " input[type='checkbox']:checked");
+                //         var checkedValue = [];
+    
+                //         for (let i = 0; i < checkedBoxs.length; i++) {
+                //             const element = checkedBoxs[i];
+                //             checkedValue.push(element.value);
+                //         }
+    
+                //         // TODO:
+                //         onchange(checkedValue);
+                //     });
+                // });
+    
+            };
 
-                    this.ruleList[divId][ruleId][featureName] = checkedList;
-
-                    this.drawConditionStackedBars(conditionInfoDiv, conditionInfoBarDiv, divId, ruleId, conditionId);
-                    this.drawRuleStackedBars(divId + "ruleid_" + ruleId + "info", divId, ruleId);
+            checkboxGroupFunc(
+                $('#' + subSliderId),
+                {
+                    selectOptions: enumerateIds,
+                    defaultSelected: conditionsUnderOneRule,
+                    ruleDivName: ruleSubconditionDiv,
+                    subSliderId: subSliderId,
+                    featureName: featureName
                 }
-            });
+            );
+
+            // $('#' + subSliderId).checkboxGroup({
+            //     selectOptions: enumerateIds,
+            //     defaultSelected: conditionsUnderOneRule,
+            //     ruleDivName: ruleSubconditionDiv,
+            //     subSliderId: subSliderId,
+            //     onchange: function (checkedList) {
+            //         //histogramName 
+
+            //         // Update histgrame
+            //         // Update node
+
+            //         var binNum = d3.select("#" + histogramName).attr("_number_of_bin");
+            //         for (var i = 0; i < binNum; i++) {
+            //             const enmeratedVal = parseFloat($("#" + histogramName + " div.histogram-col:eq(" + i + ")").attr("_enumerate_value"));
+            //             if (enmeratedVal != NaN) {
+            //                 $("#" + histogramName + " div.histogram-col:eq(" + i + ") .in-range").css("opacity", (checkedList.includes(enmeratedVal) || checkedList.includes(enmeratedVal.toString()) ? 1.0 : 0.0));
+            //             }
+            //         }
+
+            //         this.ruleList[divId][ruleId][featureName] = checkedList;
+
+            //         this.drawConditionStackedBars(conditionInfoDiv, conditionInfoBarDiv, divId, ruleId, conditionId);
+            //         this.drawRuleStackedBars(divId + "ruleid_" + ruleId + "info", divId, ruleId);
+            //     }
+            // });
+
 
             // Update histogram
 
@@ -621,7 +707,7 @@ class RuleListComponment extends React.Component {
 
         } else {
             var gRange = d3
-                .select("#" + ruleDivName)
+                .select("#" + ruleSubconditionDiv)
                 .append("div")
                 .attr("id", subSliderId)
                 .style("background-color", function () {

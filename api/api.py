@@ -92,7 +92,8 @@ def getclusterResults():
     
     clusteringType = passedInteractionsJson.get("clusteringType","kmeans")
     selectedIds = passedInteractionsJson["selectedIds"]
-    
+    if len(selectedIds) == 0:
+        selectedIds = [i for i in range(0, 100)]
     mlResult = []
     if clusteringType == "kmeans":
         mlResult = ml.kmeans(k, selectedIds)
@@ -126,7 +127,7 @@ def getclusterResults():
 @app.route("/learnRules", methods=["POST"])
 def getRules():
     passedInteractionsJson = request.get_json(force=True)
-    dfDataX = pd.read_csv('dataset/rounded_fairness_metrics_results.csv', header=0)
+    dfDataX = pd.read_csv('dataset/rounded_fairness_metrics_results_2.csv', header=0)
 
     isNumericalDataOnly=0
     learningType = "learnRules"
@@ -413,6 +414,12 @@ def handleOppositeRules(ruleMlResult):
 #     # return json.dump(rst)
 #     return json.dumps(rst,ensure_ascii=False)
 
+def checkNameExist(arr, names):
+    for k in names:
+        if k.strip() in arr:
+            return True
+    return False
+
 @app.route('/step1', methods=['GET','POST'])
 def getStep1Data():
     data = json.loads(request.get_data(as_text=True))
@@ -440,7 +447,8 @@ def getStep1Data():
                 'statistical':r[5],
                 'equal':r[6],
                 'disparate':r[7],
-                'error':r[8]
+                'error':r[8],
+                'row':row
             }
             rst.append(obj)
     return json.dumps(rst,ensure_ascii=False)
@@ -565,28 +573,50 @@ def checkString(a, b):
         rst = False
     return rst
 
+# @app.route('/step6', methods=['GET','POST'])
+# def getStep6():
+#     signatureId = json.loads(request.get_data(as_text=True))['data']
+#     filename = 'data.csv' ### rounded_fairness_metrics_results.csv
+#     df = pd.read_csv(filename)
+#     df = df.drop('Unnamed: 0', 1)
+    
+#     data=standardizeData(df)
+#     #dat = df[features]
+#     rst = []
+#     #acc,precision,recall,statistical_parity_difference,equal_opportunity_difference,disparate_impact,error_rate_ratio
+#     # for i in range(len(df)) :
+#     #     print(df.loc[i, "Name"], df.loc[i, "Age"])
+#     for i in range(len(data)):
+#         if(checkString(data.loc[i, "id"], signatureId)):
+#             rst.append(data.loc[i,'acc'])
+#             rst.append(data.loc[i,'precision'])
+#             rst.append(data.loc[i,'recall'])
+#             rst.append(data.loc[i,'statistical_parity_difference'])
+#             rst.append(data.loc[i,'equal_opportunity_difference'])
+#             rst.append(data.loc[i,'disparate_impact'])
+#             rst.append(data.loc[i,'error_rate_ratio'])
+#     return json.dumps(rst, ensure_ascii=False)
+def getArrTrip(data):
+    arr = []
+    for item in data:
+        arr.append(item.strip())
+    return arr
+
 @app.route('/step6', methods=['GET','POST'])
 def getStep6():
     signatureId = json.loads(request.get_data(as_text=True))['data']
-    filename = 'data.csv' ### rounded_fairness_metrics_results.csv
+    rst = ()
+    filename = 'data.csv'
     df = pd.read_csv(filename)
-    df = df.drop('Unnamed: 0', 1)
-    
-    data=standardizeData(df)
-    #dat = df[features]
-    rst = []
-    #acc,precision,recall,statistical_parity_difference,equal_opportunity_difference,disparate_impact,error_rate_ratio
-    # for i in range(len(df)) :
-    #     print(df.loc[i, "Name"], df.loc[i, "Age"])
-    for i in range(len(data)):
-        if(checkString(data.loc[i, "id"], signatureId)):
-            rst.append(data.loc[i,'acc'])
-            rst.append(data.loc[i,'precision'])
-            rst.append(data.loc[i,'recall'])
-            rst.append(data.loc[i,'statistical_parity_difference'])
-            rst.append(data.loc[i,'equal_opportunity_difference'])
-            rst.append(data.loc[i,'disparate_impact'])
-            rst.append(data.loc[i,'error_rate_ratio'])
+    for i,r in df.iterrows():
+        row = r[1][1:-1]
+        row = row.replace("'","")
+        arr = row.split(',')
+        arr = getArrTrip(arr)
+        target = '-'.join(arr)
+        if target == signatureId:
+            rst = (r[2],r[3],r[4],r[5],r[6],r[7],r[8])
+
     return json.dumps(rst, ensure_ascii=False)
 
 @app.route('/project_pca', methods=['POST', 'GET'])
@@ -687,7 +717,8 @@ def clustersrate():
     passedInteractionsJson = request.get_json(force=True)
     selectedIds = passedInteractionsJson["selectedIds"]
     #print("clustersrate > selectedIds", selectedIds, len(selectedIds))
-
+    if len(selectedIds) == 0:
+        selectedIds = [i for i in range(0, 100)]
     kmeans = {}
     for i in range(2, 7):
         kmeans[i] = ml.silhouette_samples(ml.kmeans(i, selectedIds))
@@ -709,4 +740,4 @@ def clustersrate():
     # return data
 
 if __name__=="__main__":
-    app.run(host="0.0.0.0", port=5000)
+    app.run(host="0.0.0.0", port=14324)

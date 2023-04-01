@@ -210,73 +210,132 @@ def formatTreeRulesToMlResult(x, y):
     return mlResult
 
 def fixC50MlResult(mlResult, outputRules):
+    """
+    Example mlResult:
+            [{
+                'featureName': ['statistical_parity_difference'],
+                'featureIds': [3],
+                'categories': ['(-inf, -0.093000002)'],
+                'matchedIds': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 26, 28, 29, 30, 31, 34, 35, 37, 40, 41, 42, 43, 46, 47, 48, 49, 54, 61, 63, 65, 71, 72, 74, 75, 77, 84, 94, 96],
+                'pred': None,
+                'confidence': '0.981',
+                'default': False,
+                'pred_label': 0
+            }, {
+                'featureName': ['statistical_parity_difference', 'equal_opportunity_difference'],
+                'featureIds': [3, 4],
+                'categories': ['(-0.07, inf)', '(-0.090999998, inf)'],
+                'matchedIds': [27, 32, 33, 38, 44, 50, 56, 57, 58, 59, 64, 66, 68, 69, 73, 79, 81, 83, 85, 88, 90, 91, 97],
+                'pred': None,
+                'confidence': '0.960',
+                'default': False,
+                'pred_label': 0
+            }, {
+                'featureName': ['statistical_parity_difference', 'equal_opportunity_difference'],
+                'featureIds': [3, 4],
+                'categories': ['(-0.093000002, inf)', '(-inf, -0.090999998)'],
+                'matchedIds': [12, 36, 39, 45, 52, 53, 55, 67, 70, 76, 78, 80, 82, 86, 87, 89, 92, 93, 98, 99],
+                'pred': None,
+                'confidence': '0.955',
+                'default': False,
+                'pred_label': 1
+            }, {
+                'featureName': ['statistical_parity_difference'],
+                'featureIds': [3],
+                'categories': ['(-0.093000002, -0.07)'],
+                'matchedIds': [12, 23, 24, 25, 36, 45, 51, 52, 55, 60, 62, 67, 70, 76, 78, 80, 87, 89, 92, 95, 98],
+                'pred': None,
+                'confidence': '0.913',
+                'default': False,
+                'pred_label': 1
+            }]
+
+    Example outputRules:
+            C5.0 [Release 2.07 GPL Edition]  	Thu Mar  2 23:25:49 2023 -------------------------------
+            Class specified by attribute `outcome'
+            Read 100 cases (8 attributes) from undefined.data
+            Rules:
+            Rule 1: (51, lift 1.3)	statistical_parity_difference <= -0.093	->  class 0  [0.981]
+            Rule 2: (23, lift 1.3)	statistical_parity_difference > -0.07	equal_opportunity_difference > -0.091	->  class 0  [0.960]
+            Rule 3: (20, lift 3.8)	statistical_parity_difference > -0.093	equal_opportunity_difference <= -0.091	->  class 1  [0.955]
+            Rule 4: (21/1, lift 3.7)	statistical_parity_difference > -0.093	statistical_parity_difference <= -0.07	->  class 1  [0.913]
+            Default class: 0
+            Evaluation on training data (100 cases):
+                        Rules     	  ----------------	    No      Errors
+                    4    1( 1.0%)   <<
+                (a)   (b)    <-classified as	  ----  ----	    74     1    (a): class 0	          25    (b): class 1 
+                Attribute usage:
+                100.00%	statistical_parity_difference	 43.00%	equal_opportunity_difference Time: 0.0 secs
+    """
     print ("mlResult",mlResult)
     print ("outputRules",outputRules)
+    j = 0 # j is index of mlResult that match current outputRule
+    startReading = False
+
     for index in range(len(outputRules)):
         if "Rules:" in outputRules[index]:
-            for j in range(len(mlResult)):
-                print("outputRules[index+j+1]", outputRules[index+j+1])
+            startReading = True
+            continue
+        
+        if startReading == False or not ("Rule " in outputRules[index]) or j >= len(mlResult):
+            continue
 
-                conditionsArray=outputRules[index+j+1].split('\n')
-                print("conditionsArray #1", j, conditionsArray)
-                #handle same featureName
-                
-                tmpList = []
-                for line in conditionsArray:
-                    if line.endswith('}') and not '{' in line and len(tmpList) > 0:
-                        tmpList[-1] = tmpList[-1] + line.replace(" ", "") 
+        print("outputRules[index]", index, outputRules[index])
+        print("mlResult[j]", j, mlResult[j])
+
+        conditionsArray=outputRules[index].split('\n')
+        print("conditionsArray: ", j, conditionsArray)
+        
+        #handle same featureName
+        
+        tmpList = []
+        for line in conditionsArray:
+            if line.endswith('}') and not '{' in line and len(tmpList) > 0:
+                tmpList[-1] = tmpList[-1] + line.replace(" ", "") 
+            else:
+                tmpList.append(line)
+
+
+        conditionsArray = tmpList
+        # isFirst=True
+        # featureNames=[]
+        mlIndex=0
+        featureNames=[]
+        isFirst=True
+        for conditionIndex in range(len(conditionsArray)):
+            print("conditionIndex", conditionIndex)
+            print("conditionsArray[conditionIndex]", conditionsArray[conditionIndex])
+
+            if " < " in conditionsArray[conditionIndex] or " <= " in conditionsArray[conditionIndex] or " = " in conditionsArray[conditionIndex] or " > " in conditionsArray[conditionIndex] or " >= " in conditionsArray[conditionIndex]:
+
+                if mlResult[j]["featureName"][mlIndex] in conditionsArray[conditionIndex]:
+                    if mlResult[j]["featureName"][mlIndex] not in featureNames:
+                        if isFirst:
+                            isFirst=False
+                        else:
+                            if "inf" in mlResult[j]["categories"][mlIndex]:
+                                mlIndex+=1
                     else:
-                        tmpList.append(line)
-
-
-                conditionsArray = tmpList
-                print ("conditionsArray #2", j, conditionsArray)
-                # isFirst=True
-                # featureNames=[]
-                mlIndex=0
-                featureNames=[]
-                isFirst=True
-                for conditionIndex in range(len(conditionsArray)):
-                    print("conditionIndex", conditionIndex)
-                    print("conditionsArray[conditionIndex]", conditionsArray[conditionIndex])
-
-                    # print("conditionsArray[conditionIndex]",conditionsArray[conditionIndex])
-                    # print ("j",j,"conditionIndex",conditionIndex)
-                    # print("mlResult len", len(mlResult),mlResult)
-                    # print("mlResult[j][featureName][conditionIndex-1]",mlResult[j]["featureName"][conditionIndex-1])
-                    
-                    #handle same featureName，filter opposi
-                    #mlIndex=0
-                    if " < " in conditionsArray[conditionIndex] or " <= " in conditionsArray[conditionIndex] or " = " in conditionsArray[conditionIndex] or " > " in conditionsArray[conditionIndex] or " >= " in conditionsArray[conditionIndex]:
-
-                        if mlResult[j]["featureName"][mlIndex] in conditionsArray[conditionIndex]:
-                            if mlResult[j]["featureName"][mlIndex] not in featureNames:
-                                if isFirst:
-                                    isFirst=False
-                                else:
-                                    if "inf" in mlResult[j]["categories"][mlIndex]:
-                                        mlIndex+=1
-                            else:
-                                featureNames.append(mlResult[j]["featureName"][mlIndex])
-                    
-                    #replace the range bound
-                    #todo: need to fix the bug below: list index out of range, and then turn it back
-                    
-                        if "<=" in conditionsArray[conditionIndex]: 
-                            # if mlResult[j]["featureName"][conditionIndex-1] in conditionsArray[conditionIndex]:
-                            mlResult[j]["categories"][conditionIndex-1]=mlResult[j]["categories"][conditionIndex-1].replace(")","]")
-                        elif ">=" in conditionsArray[conditionIndex]: 
-                            # if mlResult[j]["featureName"][conditionIndex-1] in conditionsArray[conditionIndex]:
-                            mlResult[j]["categories"][conditionIndex-1]=mlResult[j]["categories"][conditionIndex-1].replace("(","[")
-                        elif "=" in conditionsArray[conditionIndex]:
-                            if mlResult[j]["featureName"][conditionIndex-1] in conditionsArray[conditionIndex]:
-                                #todo: we need to handle the input of boolean variable
-                                #hardcode as "yes" and "no" for current version
-                                if mlResult[j]["categories"][conditionIndex-1]=="yes":
-                                    mlResult[j]["categories"][conditionIndex-1]='[1,1]'
-                                elif mlResult[j]["categories"][conditionIndex-1]=="no":
-                                    mlResult[j]["categories"][conditionIndex-1]='[0,0]'
-
-                            
-                #print(mlResult)
-            return mlResult
+                        featureNames.append(mlResult[j]["featureName"][mlIndex])
+            
+            #replace the range bound
+            #todo: need to fix the bug below: list index out of range, and then turn it back
+                try:
+                    if "<=" in conditionsArray[conditionIndex]: 
+                        # if mlResult[j]["featureName"][conditionIndex-1] in conditionsArray[conditionIndex]:
+                        mlResult[j]["categories"][conditionIndex-1]=mlResult[j]["categories"][conditionIndex-1].replace(")","]")
+                    elif ">=" in conditionsArray[conditionIndex]: 
+                        # if mlResult[j]["featureName"][conditionIndex-1] in conditionsArray[conditionIndex]:
+                        mlResult[j]["categories"][conditionIndex-1]=mlResult[j]["categories"][conditionIndex-1].replace("(","[")
+                    elif "=" in conditionsArray[conditionIndex]:
+                        if mlResult[j]["featureName"][conditionIndex-1] in conditionsArray[conditionIndex]:
+                            #todo: we need to handle the input of boolean variable
+                            #hardcode as "yes" and "no" for current version
+                            if mlResult[j]["categories"][conditionIndex-1]=="yes":
+                                mlResult[j]["categories"][conditionIndex-1]='[1,1]'
+                            elif mlResult[j]["categories"][conditionIndex-1]=="no":
+                                mlResult[j]["categories"][conditionIndex-1]='[0,0]'
+                except Exception as ex:
+                    print("!ERROR: ", ex, "  \n j=", j)
+        j += 1
+    return mlResult

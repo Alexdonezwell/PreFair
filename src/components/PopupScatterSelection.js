@@ -2,6 +2,8 @@ import React from 'react';
 import $ from "jquery";
 import Popup from 'reactjs-popup';
 import './PopupScatterSelection.css'
+import { QuestionCircleOutlined} from '@ant-design/icons';
+import ReactTooltip from 'react-tooltip';
 // import { number } from 'echarts';
 
 class PopupScatterSelection extends React.Component {
@@ -23,7 +25,9 @@ class PopupScatterSelection extends React.Component {
 
         return (
             <div>
-                <select name="projectionTypes" id="projectionTypes" ref={typeRef}>
+                <select name="projectionTypes" id="projectionTypes" ref={typeRef} onChange={(e)=>{
+                    mainAppDelegate.projectScatter(e.target.value);
+                }}>
                     <option value="pca">PCA</option>
                     <option value="mds">MDS</option>
                     <option value="tsne">TSNE</option>
@@ -38,7 +42,8 @@ class PopupScatterSelection extends React.Component {
                             <button className="close" onClick={close}>
                                 &times;
                             </button>
-                            <div className="header"> Cluster Selection </div>
+                            <div className="header"> Cluster Selection <QuestionCircleOutlined data-tip='信息填写在这里' /> </div>
+                            <ReactTooltip />
                             <div className="content">
                                 <table>
                                     <tr>

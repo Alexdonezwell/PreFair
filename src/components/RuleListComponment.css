@@ -327,3 +327,21 @@ div#ranges div.box {
 .ruleInfoBarBackgroundPositive {
   display: none;
 }
+
+#ranges .box .ruleConditionBox {
+  float: left;
+  padding-left: 1px;
+  padding-right: 1px;
+  border-right: 1px black;
+  border-style: solid;
+  border-left: 0px;
+  border-top: 0px;
+  border-bottom: 0px;
+}
+
+@media (min-width:1800px) {
+  div#ranges {
+    transform: scale(1.59);
+    transform-origin: top left;
+  }
+}

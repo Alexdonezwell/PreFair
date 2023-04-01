@@ -19,7 +19,7 @@ from mdlp.discretization import MDLP
 from sklearn.model_selection import train_test_split
 
 #since we only user one csv file, we simply use df to each different machine learning
-df = pd.read_csv('dataset/rounded_fairness_metrics_results.csv', header=0)
+df = pd.read_csv('dataset/rounded_fairness_metrics_results_2.csv', header=0)
 dfWithoutID=df.loc[:, ~df.columns.isin(['id'])]
 
 def kmeans(k, selectedids):

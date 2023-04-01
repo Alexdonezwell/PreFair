@@ -18,10 +18,13 @@ import ruleItemsData from './ruleItemsData';
 import $ from "jquery"
 import axios from 'axios';
 import ReactTooltip from 'react-tooltip';
-import PopupScatterSelection from './components/PopupScatterSelection';
-import { index, tree } from 'd3';
+import PopupScatterSelection from './components/PopupScatterSelection3';
+import ruleItemsData2 from './ruleItemsData2';
+import { group, index, max, tree } from 'd3';
 
-const apiDomain = "http://" + window.location.hostname + ":5000/";
+// const apiDomain = "http://" + window.location.hostname + ":5000/";
+const apiDomain = "http://" + window.location.hostname + ":14324/";
+
 const mytextStyle = {
     color: "#333",
     fontStyle: "normal",
@@ -32,7 +35,9 @@ const mytextStyle = {
 const { Option } = Select;
 var self = undefined;
 
-const scatterColorList = ["#abedd8", "#f6416c", "#ffde7d", "#f8f3d4", "#3d84a8", "#ff9999"]
+// const scatterColorList = ["#abedd8", "#f6416c", "#ffde7d", "#f8f3d4", "#3d84a8", "#ff9999"]
+const scatterColorList = ["#66c2a5", "#fc8d62", "#8da0cb", "#e78ac3", "#a6d854", "#ffd92f"]
+   
 
 class App extends React.Component {
     constructor(props) {
@@ -47,15 +52,15 @@ class App extends React.Component {
         highLight: [],
         step1Data: [],
         step1tasks: [
-            { id: 10, name: "None", category: "break", type: '', taking: [1, 2] },
+            { id: 10, name: "No-Norm", category: "break", type: '', taking: [1, 2] },
             { id: 1, name: "Normalization l1", category: "wip", type: 'primary' },
             { id: 2, name: "Normalization l2", category: "wip", type: 'primary' },
-            { id: 11, name: "None", category: "break", type: '', taking: [3, 4] },
+            { id: 11, name: "No-PCA", category: "break", type: '', taking: [3, 4] },
             { id: 3, name: "PCA-3", category: "wip", type: 'primary' },
             { id: 4, name: "PCA-5", category: "wip", type: 'primary' },
             // { id: 5, name: "MDS-3", category: "wip", type: 'primary' },
             // { id: 6, name: "MDS-5", category: "wip", type: 'primary' },
-            { id: 12, name: "None", category: "break", type: '', taking: [7, 8] },
+            { id: 12, name: "No-Bias-Mitigation", category: "break", type: '', taking: [7, 8] },
             { id: 7, name: "Re-Weighting Algorithm", category: "wip", type: 'primary' },
             { id: 8, name: "Disparate Impact Remover", category: "wip", type: 'primary' },
         ],
@@ -81,7 +86,7 @@ class App extends React.Component {
         radarCustimizedTreeData: [],
         treeImgData: [],
         selectedData: [],
-        treeDiagramShow: [], //控制显示隐藏
+        treeDiagramShow: [], 
         treeDiagramData: [],
         timeTxt: "",
         clusterResult: [],
@@ -122,7 +127,9 @@ class App extends React.Component {
         },
         treeDataOrgin:[],//save step2 tree origin data
         clusterNumber:2,
-        screenWidth:0
+        screenWidth:0,
+        radarColorList:[],
+        selectedStep1Line:-1,
     }
     treeInfo = {
         data: data,
@@ -141,7 +148,8 @@ class App extends React.Component {
             let val = this.convertName(da['name']);
             selected.push(val);
         }
-        axios.post(url, selected).then(function (resp) {
+        let brr = this.generateStep1Buttons(selected);
+        axios.post(url, brr).then(function (resp) {
             if (resp.status == 200) {
                 console.log(resp.data);
                 that.setState({
@@ -180,7 +188,7 @@ class App extends React.Component {
         const step3height = height * 0.5 - 30;
         const width = window.screen.width / 2;
         self.setState({
-            contentRightHeight1: (step1height + step2height + 100) + 'px',
+            contentRightHeight1: (step1height + step2height + 101.5) + 'px',
             contentRightHeight2: height2 + 'px',
             step1Height: step1height + 'px',
             step2Height: step2height,
@@ -220,7 +228,7 @@ class App extends React.Component {
 
                     self.projectScatter("pca");
                     //self.getclusterResults(parseInt(maxNum), maxKey);
-                    self.getclusterResults(that.state.clusterNumber, maxKey);
+                    self.getclusterResults(that.state.clusterNumber, "kmeans");
                 }
             }
         });
@@ -232,10 +240,7 @@ class App extends React.Component {
     onDragOver = (ev) => {
         ev.preventDefault();
     }
-    // handleChange = (val) => {
-    //     this.setState({ 'step2select': val });
-    //     this.getclusterResults(parseInt(val));
-    // }
+
     convertName = (val) => {
         let rst = '';
         switch (val) {
@@ -264,7 +269,6 @@ class App extends React.Component {
         return rst;
     }
 
-    //判断target是否存在在数组newarr中
     checkNodeExist = (newarr, target) => {
         let rst = false;
         for (let key in newarr) {
@@ -522,8 +526,8 @@ class App extends React.Component {
                     } else {
                         children = this.insertChildren3(d[i - 3], d[i - 2], d[i - 1], target, i, children, highLight);
                     }
-                } else { //节点已经存在
-                    if (highLight == 1) { //更新节点的高亮
+                } else { 
+                    if (highLight == 1) { 
                         if (i == 0) {
                             children = this.highLightLevel1(children, target);
                         } else if (i == 1) {
@@ -634,6 +638,20 @@ class App extends React.Component {
         });
     }
 
+    generateStep1Buttons = (data) =>{
+        let arr = [];
+        for(let key in data){
+            const da = data[key];
+            if(da!='No-Norm'&&da!='No-PCA'&&da!='No-Bias-Mitigation'){
+                if(da==''){
+                    da = '';
+                }
+                arr.push(da);
+            }
+        }
+        return arr;
+    }
+
     clickStep1 = (e, el) => {
         let step1tasks = this.state.step1tasks;
         let arr = [];
@@ -667,7 +685,8 @@ class App extends React.Component {
 
         let url = apiDomain + 'step1';
         let that = this;
-        axios.post(url, selected).then(function (resp) {
+        let brr = this.generateStep1Buttons(selected);
+        axios.post(url, brr).then(function (resp) {
             if (resp.status == 200) {
                 that.setState({
                     step1Data: resp.data,
@@ -790,6 +809,9 @@ class App extends React.Component {
     }
 
     getclusterResults(numberOfCluster, clusteringType) {
+        if(typeof clusteringType == 'undefined'){
+            clusteringType = 'kmeans';
+        }
         const ids = this.getHighLightIDs();
         //const ids = this.state.highLight;
         this.setState({
@@ -819,7 +841,9 @@ class App extends React.Component {
                 });
 
                 let buttonList = [];
+                let arr = [];
                 for (let i = 0; i < result.groupIDs.length; i++) {
+                    arr.push(true);
                     buttonList.push(
                         <button className="button"
                             style={{ backgroundColor: scatterColorList[i] }}
@@ -830,6 +854,7 @@ class App extends React.Component {
                 }
 
                 self.setState({ scatterSelectButton: buttonList });
+                self.setState({ radarColorList: arr });
                 // that.clickStep2();
                 that.ajaxGetTreeData(result.groupIDs);
             }
@@ -910,7 +935,41 @@ class App extends React.Component {
 
     }
     getRadarOption() { //雷达图的配置
-        const radarImgData = this.state.radarImgData;
+        let radarImgData = [];
+        const step1Data = this.state.step1Data;
+        const groupIds = this.state.scatterData.groupIDs;
+        for(let key in groupIds){
+            const group = groupIds[key];
+            let aSUM = 0;
+            let pSum = 0;
+            let rSum = 0;
+            let sSUm = 0;
+            let eSum = 0;
+            let dSum = 0;
+            let erSum = 0;
+            const size = group.length;
+            for(let g in group){
+                const da = group[g];
+                for(let item in step1Data){
+                    if(item==da){
+                        const da = step1Data[item];
+                        aSUM += da['acc'];
+                        pSum += da['precision'];
+                        rSum += da['recall'];
+                        sSUm += da['statistical'];
+                        eSum += da['equal'];
+                        dSum += da['disparate'];
+                        erSum += da['error'];
+                    }
+                }
+            }
+
+            let obj = {
+                'value':[aSUM/size,pSum/size,rSum/size,sSUm/size,eSum/size,dSum/size,erSum/size]
+            };
+            radarImgData.push(obj);
+        }
+        //const radarImgData = this.state.radarImgData;
         const radarRuleData = this.state.radarRuleData;
         const radarTreeData = this.state.radarTreeData;
         const radarCustimizedTreeData = this.state.radarCustimizedTreeData;
@@ -1011,7 +1070,7 @@ class App extends React.Component {
                 const colData = allData.map(x => x[key]);
                 const minVal = Math.min(...colData);
                 const maxVal = Math.max(...colData);
-                normalData.push((scatterSelectedItemData[key] - minVal) / (maxVal - minVal));
+                normalData.push(scatterSelectedItemData[key]);
             }
 
             legendData.push('Selected Data');
@@ -1065,13 +1124,13 @@ class App extends React.Component {
                     },
                 },
                 indicator: [
-                    { "name": "acc\n(0,1)", "max": 1 },
-                    { "name": "precision\n(0,1)", "max": 1 },
-                    { "name": "recall\n(0,1)", "max": 1 },
-                    { "name": "statistical parity difference\n(-inf,0)", "max": 1 },
-                    { "name": "equal opportunity difference\n(-inf,0)", "max": 1 },
-                    { "name": "disparate\nimpact\n(0,1)", "max": 1 },
-                    { "name": "error rate ratio\n(0,1)", "max": 1 },
+                    { "name": "Accuracy\n(0.7,0.77)", "max": 0.77,"min":0.7 },
+                    { "name": "Precision\n(0.8,0.9)", "max": 0.9,"min":0.8 },
+                    { "name": "Recall\n(0.75,0.85)", "max": 0.85,"min":0.75 },
+                    { "name": "SPD\n(-0.25,0)", "max": 0,"min":-0.25 },
+                    { "name": "EOD\n(-0.25,0)", "max": 0, "min":-0.25 },
+                    { "name": "DI\n(0.7,1)", "max": 1 ,"min":0.7 },
+                    { "name": "ERR\n(0,0.2)", "max": 0.2,"min":0 },
                 ],
                 axisName: {
                     color: '#888',
@@ -1182,7 +1241,7 @@ class App extends React.Component {
         }
     }
 
-    //6.Tree View of Strategies Clusters 图形配置
+    //6.Tree View of Strategies Clusters 
     getTreeOption(index) {
         let data = this.state.treeDiagramData[index];
         return {
@@ -1216,101 +1275,7 @@ class App extends React.Component {
         };
     }
 
-    //step 3
-    // getStep3Option() {
-    //     const step1data = this.state.step1Data;
-    //     const groupIds = this.state.scatterData.groupIDs;
-    //     let scatterSelectedData = null;
-    //     let seriesData = [];
-    //     if (groupIds != null) {
-    //         for (let i = 0; i < groupIds.length; i++) {
-    //             seriesData.push(
-    //                 {
-    //                     type: 'parallel',
-    //                     lineStyle: {
-    //                         width: 1
-    //                     },
-    //                     color: scatterColorList[i],
-    //                     data: []
-    //                 }
-    //             );
-    //         }
-    //     } else {
-    //         seriesData.push(
-    //             {
-    //                 type: 'parallel',
-    //                 lineStyle: {
-    //                     width: 1
-    //                 },
-    //                 color: "#c23531",
-    //                 data: []
-    //             }
-    //         );
-    //     }
 
-    //     let seen = new Set();
-    //     for (let key in step1data) {
-    //         const d = step1data[key];
-    //         if (seen.has(d['id'])) {
-    //             continue
-    //         }
-    //         seen.add(d['id']);
-    //         let obj = [d['acc'], d['precision'], d['recall'], d['statistical'], d['equal'], d['disparate'], d['error']];
-
-    //         if (groupIds != null) {
-    //             for (let j = 0; j < groupIds.length; j++) {
-    //                 if (groupIds[j].includes(d['id'])) {
-    //                     seriesData[j].data.push(obj);
-    //                     break
-    //                 }
-    //             }
-    //         } else {
-    //             seriesData[0].data.push(obj);
-    //         }
-    //         if (d["id"] == this.state.scatterSelectedItemId) {
-    //             scatterSelectedData = obj;
-    //         }
-    //     }
-    //     var schema = [
-    //         { name: 'acc', index: 0, text: 'acc' },
-    //         { name: 'precision', index: 1, text: 'precision' },
-    //         { name: 'recall', index: 2, text: 'recall' },
-    //         { name: 'statistical_parity_difference', index: 3, text: 'statistical_parity_difference' },
-    //         { name: 'equal_opportunity_difference', index: 4, text: 'equal_opportunity_difference' },
-    //         { name: 'disparate impact', index: 5, text: 'disparate impact' },
-    //         { name: 'error_rate_ratio', index: 6, text: 'error_rate_ratio' }
-    //     ];
-
-    //     if (scatterSelectedData != null) {
-    //         seriesData.push({
-    //             type: 'parallel',
-    //             lineStyle: {
-    //                 width: 5
-    //             },
-    //             data: [scatterSelectedData]
-    //         });
-    //     }
-    //     console.log(seriesData);
-    //     return {
-    //         parallelAxis: [
-    //             // { name: schema[0].text, nameLocation: 'start', scale: true },
-    //             { dim: 0, name: schema[0].text, scale: true, min: 0.7, max: 0.77 },
-    //             { dim: 1, name: schema[1].text, scale: true, min: 0.80, max: 0.9 },
-    //             { dim: 2, name: schema[2].text, scale: true, min: 0.75, max: 0.85 },
-    //             { dim: 3, name: schema[3].text, scale: true, min: -0.25, max: 0 },
-    //             { dim: 4, name: schema[4].text, scale: true, min: -0.25, max: 0 },
-    //             { dim: 5, name: schema[5].text, scale: true, min: 0.7, max: 1 },
-    //             { dim: 6, name: schema[6].text, scale: true, min: 0, max: 0.2 }
-    //         ],
-    //         parallel: {
-    //             left: '5%',
-    //             right: '13%',
-    //             bottom: '10%',
-    //             top: '10%'
-    //         },
-    //         series: seriesData
-    //     };
-    // }
     getParallelColor(id, groupIds){
         let color = '#ccc';
         for(let key in groupIds){
@@ -1321,25 +1286,74 @@ class App extends React.Component {
         }
         return color;
     }
+    checkTargetInArr(arr, target){
+        let flag = false;
+        let data = target.split(',');
+        let newarr = [];
+        for(let da in data){
+            newarr.push();
+            if(arr.indexOf(data[da].trim()) > -1){
+                flag = true;
+                break;
+            }
+        }
+        return flag;
+    }
     getStep3Option() {
+        const tasks = this.state.step1tasks;
+        let newarr = [];
+        for(let key in tasks){
+            const da = tasks[key];
+            if(da['type']=='primary'){
+                switch(da['name']){
+                    case "Normalization l1":
+                        newarr.push('l1');
+                        break;
+                    case "Normalization l2":
+                        newarr.push('l2');
+                        break;
+                    case "PCA-3":
+                        newarr.push('PCA3');
+                        break;
+                    case "PCA-5":
+                        newarr.push('PCA5');
+                        break;
+                    case "Re-Weighting Algorithm":
+                        newarr.push('reweighing');
+                        break;
+                    case "Disparate Impact Remover":
+                        newarr.push('DisparateImpactRemover');
+                        break;
+                }
+
+            }
+        }
         let seriesData = [];
         const step1data = this.state.step1Data;
         const groupIds = this.state.scatterData.groupIDs;
         for(let index in step1data){
             const d = step1data[index];
-            let obj = [d['acc'], d['precision'], d['recall'], d['statistical'], d['equal'], d['disparate'], d['error']];
-            let tt = [];
-            tt.push(obj);
-            let color = this.getParallelColor(index, groupIds);
-            let da = {
-                type: 'parallel',
-                lineStyle: {
-                    width: 1
-                },
-                color: color,
-                data:tt
-            };
-            seriesData.push(da);
+            if(this.checkTargetInArr(newarr, d['row'])){
+                let obj = [d['acc'], d['precision'], d['recall'], d['statistical'], d['equal'], d['disparate'], d['error']];
+                let tt = [];
+                tt.push(obj);
+                let color = this.getParallelColor(index, groupIds);
+                let width = 1;
+                if(index==this.state.selectedStep1Line){
+                    color = '#000';
+                    width = 3;
+                }
+                
+                let da = {
+                    type: 'parallel',
+                    lineStyle: {
+                        width: width
+                    },
+                    color: color,
+                    data:tt
+                };
+                seriesData.push(da);
+            }
         }
         var schema = [
             { name: 'acc', index: 0, text: 'acc' },
@@ -1350,6 +1364,7 @@ class App extends React.Component {
             { name: 'disparate impact', index: 5, text: 'disparate impact' },
             { name: 'error_rate_ratio', index: 6, text: 'error_rate_ratio' }
         ];
+
         return {
             parallelAxis: [
                 // { name: schema[0].text, nameLocation: 'start', scale: true },
@@ -1417,15 +1432,8 @@ class App extends React.Component {
         let treeAncestors = [];
         treeAncestors = this.getNamesNode(treeAncestors, currentNode);
         treeAncestors = treeAncestors.reverse();
-
-        let params = '[';
-        for (let key in treeAncestors) {
-            params += "'" + treeAncestors[key] + "',";
-        }
-        params = params.substring(0, params.length - 1);
-        params += ']';
         const url = apiDomain + 'step6';
-        let p = { 'data': params };
+        let p = { 'data': treeAncestors.join('-')};
         axios.post(url, p).then(function (resp) {
             let data = resp.data;
             let obj = {
@@ -1451,17 +1459,11 @@ class App extends React.Component {
     nodeGenerate = (currentNode) => {
         // hoverNode(currentNode);
         let treeAncestors = [];
-        treeAncestors = self.getNamesNode(treeAncestors, currentNode);
+        treeAncestors = this.getNamesNode(treeAncestors, currentNode);
         treeAncestors = treeAncestors.reverse();
-
-        let params = '[';
-        for (let key in treeAncestors) {
-            params += "'" + treeAncestors[key] + "',";
-        }
-        params = params.substring(0, params.length - 1);
-        params += ']';
         const url = apiDomain + 'step6';
-        let p = { 'data': params };
+        let p = { 'data': treeAncestors.join('-')};
+
         axios.post(url, p).then(function (resp) {
             let data = resp.data;
             let obj = {
@@ -1590,6 +1592,191 @@ class App extends React.Component {
 
     onEvents = {
         'axisareaselected': this.onChartAxisareaSelected.bind(this)
+    }
+
+    onRadarEvents ={
+        'legendselectchanged':this.onRadarEventsClick.bind(this)
+    }
+
+    onRadarEventsClick(param, self){
+        let selectedIndex = 0;
+        for(let key in param.selected){
+            if(!param.selected[key]){
+                selectedIndex = key.split(' ')[1] - 1;
+            }
+        }
+        this.state.radarColorList[selectedIndex] = !this.state.radarColorList[selectedIndex];
+        self.clear();
+        const radarImgData = this.state.radarImgData;
+        const radarRuleData = this.state.radarRuleData;
+        const radarTreeData = this.state.radarTreeData;
+        const radarCustimizedTreeData = this.state.radarCustimizedTreeData;
+        const scatterSelectedItemData = this.state.scatterSelectedItemData;
+
+        let seriesData = [];
+        let legendData = [];
+
+        if (radarRuleData.length > 0) {
+            legendData.push('Rule');
+            seriesData.push({
+                name: 'Rule',
+                type: 'radar',
+                colorBy: 'series',
+                lineStyle: {
+                    width: 1,
+                    opacity: 0.1
+                },
+                symbol: 'none',
+                itemStyle: {
+                    color: 'rgb(85, 26, 139)'
+                },
+                data: radarRuleData
+            });
+        }
+        if (radarTreeData.length > 0) {
+            legendData.push('Hovered Strategy');
+            seriesData.push({
+                name: 'Hovered Strategy',
+                type: 'radar',
+                symbol: "none",
+                colorBy: 'series',
+                lineStyle: {
+                    width: 2,
+                    opacity: 1
+                },
+                areaStyle: {
+                    opacity: 0.0,
+                },
+                itemStyle: {
+                    color: 'rgb(255, 0, 0)'
+                },
+                data: radarTreeData
+            });
+        }
+        if (radarCustimizedTreeData.length > 0) {
+            legendData.push('Customized Strategy');
+            seriesData.push({
+                name: 'Customized Strategy',
+                type: 'radar',
+                symbol: "none",
+                colorBy: 'series',
+                lineStyle: {
+                    width: 2,
+                    opacity: 1
+                },
+                areaStyle: {
+                    opacity: 0.0,
+                },
+                itemStyle: {
+                    color: 'rgb(0, 255, 255)'
+                },
+                data: radarCustimizedTreeData
+            });
+        }
+
+        for (let i = 0; i < radarImgData.length; i++) {
+            const itemData = radarImgData[i];
+            let color = scatterColorList[i];
+            if(!this.state.radarColorList[i]){
+                color = '#DDD';
+            }
+            const dataName = 'Clusters ' + (i + 1);
+            legendData.push(dataName);
+            seriesData.push({
+                name: dataName,
+                type: 'radar',
+                symbol: "none",
+                colorBy: 'series',
+                lineStyle: {
+                    width: 2,
+                    opacity: 1
+                },
+                areaStyle: {
+                    // color: '#1890ff',
+                    opacity: 0.0,
+                },
+                itemStyle: {
+                    color: color
+                },
+                data: [itemData]
+            });
+        }
+
+        if (scatterSelectedItemData != null) {
+            const radarList = ['acc', 'precision', 'recall', 'statistical', 'equal', 'disparate', 'error'];
+            const allData = this.state.step1Data;
+
+            let normalData = [];
+            for (let i = 0; i < radarList.length; i++) {
+                const key = radarList[i];
+                const colData = allData.map(x => x[key]);
+                const minVal = Math.min(...colData);
+                const maxVal = Math.max(...colData);
+                normalData.push((scatterSelectedItemData[key] - minVal) / (maxVal - minVal));
+            }
+
+            legendData.push('Selected Data');
+            seriesData.push({
+                name: 'Selected Data',
+                type: 'radar',
+                symbol: "none",
+                colorBy: 'series',
+                lineStyle: {
+                    width: 2,
+                    opacity: 1
+                },
+                areaStyle: {
+                    opacity: 0.0,
+                },
+                itemStyle: {
+                    color: '#000'
+                },
+                data: [normalData]
+            });
+        }
+        const option = {
+            legend: {
+                right: 0,
+                orient: 'vertical',
+                data: legendData
+            },
+            radar: {
+                id: 'radarArea',
+                triggerEvent: false,
+                name: {
+                    textStyle: {
+                        color: '#999',
+                        backgroundColor: 'transparent'
+                    },
+                },
+                axisLine: {
+                    lineStyle: {
+                        color: '#ddd',
+                    },
+                },
+                splitArea: {
+                    show: false,
+                    areaStyle: {
+                        color: '#fafafa',
+                    },
+                },
+                indicator: [
+                    { "name": "acc\n(0,1)", "max": 1 },
+                    { "name": "precision\n(0,1)", "max": 1 },
+                    { "name": "recall\n(0,1)", "max": 1 },
+                    { "name": "statistical parity difference\n(-inf,0)", "max": 1 },
+                    { "name": "equal opportunity difference\n(-inf,0)", "max": 1 },
+                    { "name": "disparate\nimpact\n(0,1)", "max": 1 },
+                    { "name": "error rate ratio\n(0,1)", "max": 1 },
+                ],
+                axisName: {
+                    color: '#888',
+                    fontSize: 10,
+                }
+            },
+            series: seriesData
+        };
+        self.setOption(option,true);//true重绘
     }
 
     onChartAxisareaSelected(param, self) {
@@ -2178,7 +2365,8 @@ class App extends React.Component {
                 let selectedItem = self.state.step1Data.find(x => x["id"] == indexId);
                 self.setState({
                     scatterSelectedItemId: indexId,
-                    scatterSelectedItemData: selectedItem
+                    scatterSelectedItemData: selectedItem,
+                    selectedStep1Line:indexId
                 })
                 self.changeHighLightNode(selectedItem, param.seriesIndex-1);
             }
@@ -2187,37 +2375,37 @@ class App extends React.Component {
         return (
             <div id="main">
                 <ReactTooltip id='first_tip' place="bottom" type="dark" effect="solid">
-                    <span>The Parallel Coordinates View shows the performance of all available strategies. You can select/unselect operations on the top to include/exclude strategies containing those operations in the PC view. If you select “none” in each pair of brackets, it means you want strategies with no operations of such kind.(e.g. Selecting “none” in normalization means strategies that don't include any normalization operation will be shown in the PC view.)
-
-                        You can clip range filters to get rid of unqualified strategies. Upon clicking on “highlight qualified strategies” button, qualified strategies will be marked in red in the 4. Tree view.
-
-                        Hereby we illustrate the meaning of each bias metric:
-                        Accuracy indicates the ratio of corrected predicted instances among the entire dataset.
-                        Precision indicates the ratio of True Positives over all predicted positives.
-                        Recall Indicates the measure of the model correctly identifying True Positives over all predicted positives.
-                        Statistical Parity Difference indicates the probability difference for a protected member to be predicted as positive compared to a privileged member.
-                        Equal Opportunity Difference measures the difference of true positive rates between the protected group and  the privileged group.
-                        Disparate Impact measures the ratio difference of the positively predicted rate between the protected group and the privileged group.
-                        Error Rate Ratio measures the ratio difference of predictive error rate between the protected group and the privileged group.</span>
+                    <span> 1. Select the operations you are interested in applying on the dataset<br />
+                           2. Customize the filters on each axis to narrow down the option space<br />
+                           3. Click on "Run Clustering" button to group qualified stratrgies for further exploration
+                        
+                    </span>
                 </ReactTooltip>
                 <ReactTooltip id='sec_tip' place="bottom" type="dark" effect="solid">
-                    <span>Choose the number of clusters, and click on the “generate clusters” button, all strategies will be grouped into a few clusters according to the model performance when applying them on the dataset. The performance of the centroids of each cluster is shown in the radar plot.
+                    <span>      SPD: statistical parity difference<br />
+                                EOD: equal opportunity difference<br />
+                                DI: disparate impact<br />
+                                ERR: error rate ratio.
                     </span>
                 </ReactTooltip>
                 <ReactTooltip id='third_tip' place="bottom" type="dark" effect="solid">
-                    <span> By clicking on each cluster in Section2, a rule list will be generated to show how the cluster you select is different from others. The rule will also be reflected in the radar plot. You can adjust the slider in the rule view, the concentration of the clusters indicates the numbers of strategies in each cluster which qualifies the current rule. </span>
+                    <span> By clicking on each cluster tab, a rule list will be generated to show how the cluster you select is different from others. </span>
                 </ReactTooltip>
                 <ReactTooltip id='six_tip' place="bottom" type="dark" effect="solid">
-                    <span>You will see strategies in each cluster presented in the form of a tree view. Each branch of the tree view indicates a series of pre-processing operations applied on the datasets. By hovering on each node, on the radar plot you will see the performance of applying this strategy on the dataset using the provided model.
+                    <span>1. You will see strategies in each cluster presented in the form of a tree view. <br />
+                    2. Each branch of the tree view indicates a series of pre-processing operations applied on the datasets. <br />
+                    3. By hovering on each node, on the radar plot you will see the performance of applying this strategy on the dataset using the provided model.
                     </span>
                 </ReactTooltip>
                 <ReactTooltip id='seventh_tip' place="bottom" type="dark" effect="solid">
-                    <span>You can click on the root node to create new empty child nodes. By dragging the operations from above into the empty slot, you can build your customized pre-processing strategy. Clicking on the leaf node of your strategy you will find a “generate” button. Clicking on it you will see the performance of the current strategy in the radar plot.
+                    <span>1. Click on the root node to create new empty child nodes.  <br />
+                          2. Drag the operations from above into the empty slot, you can build your customized pre-processing strategy.  <br />
+                          3. Click on the leaf node of your strategy and click the "View Result" button. you can see the performance of the current strategy in the radar plot.
                     </span>
                 </ReactTooltip>
                 <div id="main-container">
                     <div className="top">
-                        <h2>PREtzel</h2>
+                        <h2>PreFair</h2>
                         <span>Audit Algorithmic Bias Caused By Pre-processing</span>
                     </div>
                     <div className="other">
@@ -2231,12 +2419,14 @@ class App extends React.Component {
                                 </div>
                                 <div className='graphics'>
                                     <ReactEcharts
+                                        notMerge={true}
+                                        lazyUpdate={true}
                                         option={this.getStep3Option()}
                                         onEvents={this.onEvents}
                                         style={{ width: '100%', height: this.state.step1Height }}
                                     />
                                     <div style={{ textAlign: 'right' }}>
-                                        <Button type="primary" size='small' onClick={() => this.clickStep3()}>Finish filtering</Button>
+                                        <Button type="primary" size='large' onClick={() => this.clickStep3()}>Run Clustering</Button>
                                     </div>
                                 </div>
                             </div>
@@ -2279,17 +2469,18 @@ class App extends React.Component {
                                             option={this.getRadarOption()}
                                             notMerge={true}
                                             lazyUpdate={true}
+                                            onEvents={this.onRadarEvents}
                                             style={{ width: '480px', height: '320px' }}
                                         />
                                         <div id="radarNote">
-                                            <strong>Note:</strong> Every cluster in the radar chart indicates the centroid strategy's performance of that cluster.
-                                            <br />The shaded purple area reflects the rule space of the selected cluster.
+                                            {/* <strong>Note:</strong> Every cluster in the radar chart indicates the centroid strategy's performance of that cluster. */}
+                                            {/* <br />The shaded purple area reflects the rule space of the selected cluster. */}
                                         </div>
                                         <div id="radarCover">
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            </div> 
                             {/* <div className="step3">
                                 <div className="title">
                                     <div className="text">3.Filter clusters on coordinates <QuestionCircleOutlined /></div>
@@ -2307,7 +2498,7 @@ class App extends React.Component {
                             </div> */}
                             <div className="step4">
                                 <div className="title">
-                                    <div className="text">3. Rule view <a data-tip data-for='third_tip' style={{ color: 'black' }}> <QuestionCircleOutlined /> </a>
+                                    <div className="text">3. Descriptive Rule view <a data-tip data-for='third_tip' style={{ color: 'black' }}> <QuestionCircleOutlined /> </a>
                                         <div id="scatterSelectButtonArea"> {this.state.scatterSelectButton} </div>
                                     </div>
                                     {/* <div className="text">4.Clusters View<QuestionCircleOutlined /></div> */}
@@ -2319,7 +2510,7 @@ class App extends React.Component {
                                     <div className='content scroll scrollx' style={{ 'height': this.state.step3Height + 300 }}>
                                         {/* <div className='content-left' style={{ width: '40%', marginRight: '40px', maxWidth: '280px' }}> */}
                                         {/* <div className='content'> */}
-                                        <RuleListComponment onUpdatedRuleValue={this.onUpdatedRuleValue} {...{ ruleItemsData: ruleItemsData, mlStdResult: this.state.ruleStdResultData, parentComponment: this }} />
+                                        <RuleListComponment onUpdatedRuleValue={this.onUpdatedRuleValue} {...{ ruleItemsData: ruleItemsData2, mlStdResult: this.state.ruleStdResultData, parentComponment: this }} />
                                         {/* </div> */}
 
                                     </div>
@@ -2340,7 +2531,7 @@ class App extends React.Component {
                             </div>
                             <div className="step7">
                                 <div className="title" >
-                                    <div className="text" style={{ width: '100%' }}>5.Customization View<a data-tip data-for='six_tip' style={{ color: 'black' }}> <QuestionCircleOutlined /> </a></div>
+                                    <div className="text" style={{ width: '100%' }}>5.Customization View<a data-tip data-for='seventh_tip' style={{ color: 'black' }}> <QuestionCircleOutlined /> </a></div>
                                 </div>
                                 <div className="content">
 

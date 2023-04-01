@@ -4,7 +4,7 @@
  */
 import React from 'react';
 import * as d3 from 'd3';
-import { FullscreenExitOutlined, PlusCircleOutlined, MinusCircleOutlined, FullscreenOutlined, DatabaseOutlined, DeleteRowOutlined, AlignCenterOutlined, WarningOutlined } from '@ant-design/icons';
+import { FullscreenExitOutlined, PlusCircleOutlined, MinusCircleOutlined, FullscreenOutlined, CheckCircleOutlined, DatabaseOutlined, DeleteRowOutlined, AlignCenterOutlined, WarningOutlined } from '@ant-design/icons';
 import CONSTANT from '../utils/CONSTANT';
 import TreeComponent from './TreeComponent';
 
@@ -209,9 +209,9 @@ class TreeMap extends React.Component {
                 <div className="menu" style={{ visibility: menuStatus, left: positionX, top: positionY }}>
                     <div className="add-menu">
                         <ul>
-                            <li onClick={this.addNode}><DatabaseOutlined />Create Node</li>
-                            <li onClick={this.deleteNode}><DeleteRowOutlined />Delete Node</li>
-                            <li onClick={this.generate}><DeleteRowOutlined />Generate</li>
+                            <li onClick={this.addNode}><PlusCircleOutlined/>Create Node</li>
+                            <li onClick={this.deleteNode}><MinusCircleOutlined/>Delete Node</li>
+                            <li onClick={this.generate}><CheckCircleOutlined/>View Result</li>
                         </ul>
                     </div>
                 </div>
